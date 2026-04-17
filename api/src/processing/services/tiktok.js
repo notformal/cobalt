@@ -13,17 +13,29 @@ export default async function(obj) {
     let postId = obj.postId;
 
     if (!postId) {
-        let html = await fetch(`${shortDomain}${obj.shortLink}`, {
+        const shortResp = await fetch(`${shortDomain}${obj.shortLink}`, {
             redirect: "manual",
             headers: {
                 "user-agent": genericUserAgent.split(' Chrome/1')[0]
             }
-        }).then(r => r.text()).catch(() => {});
+        }).catch(() => {});
 
-        if (!html) return { error: "fetch.fail" };
+        if (!shortResp) return { error: "fetch.fail" };
+
+        const html = await shortResp.text().catch(() => "");
+        let extractedURL;
 
         if (html.startsWith('<a href="https://')) {
-            const extractedURL = html.split('<a href="')[1].split('?')[0];
+            extractedURL = html.split('<a href="')[1].split('?')[0];
+        } else {
+            // fallback: Location header for plain 301/302 responses with empty body
+            const location = shortResp.headers.get("location");
+            if (location?.startsWith("https://")) {
+                extractedURL = location.split('?')[0];
+            }
+        }
+
+        if (extractedURL) {
             const { host, patternMatch } = extract(normalizeURL(extractedURL));
             if (host === "tiktok") {
                 postId = patternMatch?.postId;
