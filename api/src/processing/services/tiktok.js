@@ -72,7 +72,7 @@ export default async function(obj) {
         return { error: "fetch.empty" };
     }
 
-    let video, videoFilename, audioFilename, audio, images,
+    let video, audioFilename, audio, images,
         filenameBase = `tiktok_${detail.author?.uniqueId}_${postId}`,
         bestAudio; // will get defaulted to m4a later on in match-action
 
@@ -87,7 +87,6 @@ export default async function(obj) {
 
     if (!obj.isAudioOnly && !images) {
         video = playAddr;
-        videoFilename = `${filenameBase}.mp4`;
     } else {
         audio = playAddr;
         audioFilename = `${filenameBase}_audio`;
@@ -117,7 +116,13 @@ export default async function(obj) {
             urls: video,
             subtitles,
             fileMetadata,
-            filename: videoFilename,
+            filenameAttributes: {
+                service: "tiktok",
+                id: postId,
+                title: detail.desc || postId,
+                author: detail.author?.uniqueId,
+                extension: "mp4",
+            },
             headers: { cookie }
         }
     }
